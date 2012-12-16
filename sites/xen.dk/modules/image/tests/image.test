@@ -1,5 +1,4 @@
 <?php
-// $Id: image.test,v 1.14 2009/12/30 12:51:47 joachim Exp $
 
 /**
  * Test image functionality.

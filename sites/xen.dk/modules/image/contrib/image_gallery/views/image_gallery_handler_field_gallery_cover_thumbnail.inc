@@ -1,5 +1,4 @@
 <?php
-// $Id: image_gallery_handler_field_gallery_cover_thumbnail.inc,v 1.1.2.2 2010/08/03 17:43:00 sun Exp $
 
 /**
  * Field handler for gallery cover node image.
@@ -59,7 +58,7 @@ class image_gallery_handler_field_gallery_cover_thumbnail extends image_gallery_
     $output = $this->render_link($output, $values);
     // Wrap a common class so the thumbnail can be style no matter what field.
     // TODO: theme function?
-    return '<span class="image-gallery-view-cover-thumbnail">' . $output . '</span>';
+    return '<div class="image-gallery-view-cover-thumbnail">' . $output . '</div>';
   }
 }
 

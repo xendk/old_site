@@ -1,5 +1,4 @@
 <?php
-// $Id: image_import.test,v 1.3 2009/08/08 13:32:54 joachim Exp $
 
 class ImageImportTest extends DrupalTestCase {
 

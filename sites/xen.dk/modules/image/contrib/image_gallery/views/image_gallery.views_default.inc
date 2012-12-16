@@ -1,5 +1,4 @@
 <?php
-// $Id: image_gallery.views_default.inc,v 1.4 2010/02/28 10:27:20 joachim Exp $
 
 /**
  * Implementation of hook_views_default_views().

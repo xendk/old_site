@@ -1,5 +1,4 @@
 <?php
-// $Id: image_import.admin.inc,v 1.3.2.1 2010/08/03 17:43:00 sun Exp $
 
 /**
  * Form builder function for Image Import settings form.
