@@ -1,4 +1,0 @@
-name = Field convert
-description = Convert modules' data to FieldAPI.
-core = 7.x
-files[] = field_convert.module
