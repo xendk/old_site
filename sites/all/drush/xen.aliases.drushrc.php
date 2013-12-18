@@ -14,7 +14,9 @@ $aliases['stg'] = array(
   'parent' => '@xen.common',
   'uri' => 'stg.xen.dk',
   'root' => '/var/www/stg.xen.dk',
-  'git-branch' => 'deployment-testing',
+  'deployotron' => array(
+    'branch' => 'master',
+  ),
 );
 
 $aliases['live'] = array(
