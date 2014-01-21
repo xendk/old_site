@@ -23,4 +23,7 @@ $aliases['live'] = array(
   'parent' => '@xen.common',
   'uri' => 'xen.dk',
   'root' => '/var/www/xen.dk',
+  'deployotron' => array(
+    'branch' => 'master',
+  ),
 );
