@@ -14,6 +14,7 @@ namespace Deployotron {
         'DeployCode',
         'RestartApache2',
         'UpdateDatabase',
+        'RunDrakePostUpdate',
         'ClearCache',
         'SiteOnline',
         'RestartVarnish',
@@ -106,14 +107,22 @@ namespace Deployotron {
     /**
      * Get a description of what the action would do.
      *
-     * Actions are encuraged to override this to provide a more specific
-     * description of the effect of the action. Used when the user provides the
-     * --confirm switch.
+     * If the action subclass defines the $description property, use that, else
+     * returns a generic message.
+     *
+     * If more logic than a static string is needed, subclassesare encouraged to
+     * override this to provide a more specific description of the effect of the
+     * action.
+     *
+     * Used when the user provides the --confirm switch.
      *
      * @return string
      *   Description of the action.
      */
-    public function describe() {
+    public function getDescription() {
+      if (isset(static::$description)) {
+        return static::$description;
+      }
       return dt("Run the @short action.", array('@short' => static::$short));
     }
 
@@ -200,7 +209,18 @@ namespace Deployotron {
      *   Whether the command succeeded.
      */
     protected function sh($command) {
-      $exec = drush_shell_proc_build($this->site, $command, TRUE);
+      $exec = $command;
+      // Check that there is a remote host before trying to construct a remote
+      // command.
+      $host = drush_remote_host($this->site);
+      if (!empty($host)) {
+        $exec = drush_shell_proc_build($this->site, $command, TRUE);
+      }
+      else {
+        // Else just cd to the root of the alias. This allows us to test the
+        // code without a remote host.
+        $exec = "cd " . drush_escapeshellarg($this->site['root']) . " && " . $exec;
+      }
       return $this->shLocal($exec);
     }
 
@@ -255,15 +275,16 @@ namespace Deployotron {
 
     /**
      * Get the current git head revision.
+     *
+     * @param bool $no_cache
+     *   Dont't use cache, but fetch anyway.
      */
-    protected function getHead() {
+    protected function getHead($no_cache = FALSE) {
       $name = $this->site['#name'];
-      if (!isset(self::$headShas[$name])) {
+      if (!isset(self::$headShas[$name]) || $no_cache) {
         self::$headShas[$name] = '';
-        $exec = drush_shell_proc_build($this->site, "git rev-parse HEAD", TRUE);
-        // Return code 0 = success.
-        if (drush_shell_exec($exec)) {
-          self::$headShas[$name] = trim(implode("\n", drush_shell_exec_output()));
+        if ($this->sh('git rev-parse HEAD')) {
+          self::$headShas[$name] = trim($this->shOutput());
         }
       }
       return self::$headShas[$name];
@@ -283,22 +304,21 @@ namespace Deployotron\Actions {
    * Check for locally modified files and do a dry-run checkout.
    */
   class SanityCheck extends Action {
+    static protected $description = 'Check that the git repository is clean.';
     static protected $runMessage = 'Sanity checking';
     static protected $short = 'sanity check';
 
     /**
      * {@inheritdoc}
      */
-    public function describe() {
-      return dt("Check that the git repository is clean.");
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function run() {
-      if (!$this->sh('git status -s')) {
+      // http://stackoverflow.com/questions/3878624/how-do-i-programmatically-determine-if-there-are-uncommited-changes
+      // claims this is the proper way. I'm inclined to agree.
+      if (!$this->sh('git diff-files --quiet --ignore-submodules --')) {
         return drush_set_error(dt('Repository not clean.'));
+      }
+      if (!$this->sh('git diff-index --cached --quiet HEAD --ignore-submodules --')) {
+        return drush_set_error(dt('Uncommitted changes in the index.'));
       }
 
       return TRUE;
@@ -315,9 +335,17 @@ namespace Deployotron\Actions {
     /**
      * {@inheritdoc}
      */
-    public function describe() {
-      $this->shLocal('git show --pretty="format:%an <%ae> @ %ci (%cr)%n%n%B" --color --stat ' . $this->sha);
-      return dt("Run git fetch and check out @sha:\n!info", array('@sha' => $this->sha, '!info' => $this->shOutput()));
+    public function getDescription() {
+      $this->shLocal('git log --pretty="format:%an <%ae> @ %ci (%cr)%n%n%B" --color --no-walk ' . $this->sha);
+      $commit = $this->shOutput();
+      $this->shLocal('git diff --color --stat ' . $this->getHead() . ' ' . $this->sha);
+      $stat = $this->shOutput();
+      $stat = explode("\n", $stat);
+      if (count($stat) > 20) {
+        $stat = array_merge(array_slice($stat, 0, 8), array('', ' ...', ''), array_slice($stat, -8));
+      }
+
+      return dt("Run git fetch and check out @sha:\n!info", array('@sha' => $this->sha, '!info' => $commit . "\n\nAll changes:\n" . implode("\n", $stat)));
     }
 
     /**
@@ -344,7 +372,7 @@ namespace Deployotron\Actions {
         return drush_set_error(dt('--branch, --tag and --sha are mutually exclusive.'));
       }
       elseif (count($posibilities) < 1) {
-        return drush_set_error(dt('You must provide at least one of --branch, --tag or --sha..'));
+        return drush_set_error(dt('You must provide at least one of --branch, --tag or --sha.'));
       }
 
       // Even if we already have a SHA, we let it through rev-parse. Easy way to
@@ -369,20 +397,33 @@ namespace Deployotron\Actions {
      */
     public function run() {
       if (!$this->sh('git fetch')) {
-        drush_print($this->shOutput());
+        $message = $this->shOutput();
+        if (preg_match('/Permission denied \(publickey\)/', $message)) {
+          drush_log(dt('Access denied to repository URL.'), 'error');
+          drush_log(dt('Ensure that either that the user on the server has access to the repository, or use "ForwardAgent yes" in .ssh/config.'), 'error');
+        }
+        else {
+          drush_print($message);
+        }
         return drush_set_error(dt("Could not fetch from remote repository."));
       }
 
       if (!$this->sh('git checkout ' . $this->sha)) {
-        drush_print($this->shOutput());
+        $message = $this->shOutput();
+        if (preg_match('/^fatal: reference is not a tree/', $message)) {
+          drush_log(dt('Could not find SHA, did you forget to push?'), 'error');
+        }
+        else {
+          drush_print($message);
+        }
         return drush_set_error(dt('Could not checkout code.'));
       }
 
       // An extra safety check to make sure that things are as we think.
-      if ($this->shLocal('git rev-parse HEAD')) {
-        $deployed_sha = trim($this->shOutput());
+      $deployed_sha = $this->getHead(TRUE);
+      if ($deployed_sha) {
         if ($deployed_sha != $this->sha) {
-          return drush_set_error(dt('Code not properly deployed Head is at @sha now.', array('@sha' => $deployed_sha)));
+          return drush_set_error(dt('Code not properly deployed, head is at @sha now.', array('@sha' => $deployed_sha)));
         }
         else {
           drush_log(dt('HEAD now at @sha', array('@sha' => $deployed_sha)), 'status');
@@ -401,15 +442,10 @@ namespace Deployotron\Actions {
    * Set site offline.
    */
   class SiteOffline extends Action {
+    static protected $description = 'Set the site offline.';
     static protected $runMessage = 'Setting site offline';
+    static protected $killSwitch = 'no-offline';
     static protected $short = 'set site offline';
-
-    /**
-     * {@inheritdoc}
-     */
-    public function describe() {
-      return dt("Set the site offline.");
-    }
 
     /**
      * {@inheritdoc}
@@ -435,15 +471,10 @@ namespace Deployotron\Actions {
    * Set site online.
    */
   class SiteOnline extends Action {
+    static protected $description = 'Set the site online.';
     static protected $runMessage = 'Setting site online';
+    static protected $killSwitch = 'no-offline';
     static protected $short = 'set site online';
-
-    /**
-     * {@inheritdoc}
-     */
-    public function describe() {
-      return dt("Set the site online.");
-    }
 
     /**
      * {@inheritdoc}
@@ -485,7 +516,7 @@ namespace Deployotron\Actions {
     /**
      * {@inheritdoc}
      */
-    public function describe() {
+    public function getDescription() {
       return dt("Dump database to @file.", array('@file' => $this->dumpFilename()));
     }
 
@@ -529,6 +560,7 @@ namespace Deployotron\Actions {
         'file' => 'Database dump file to restore.',
       );
     }
+
     /**
      * {@inheritdoc}
      */
@@ -543,7 +575,7 @@ namespace Deployotron\Actions {
     /**
      * {@inheritdoc}
      */
-    public function describe() {
+    public function getDescription() {
       return dt("Restore database from @file.", array('@file' => drush_get_option('file', NULL)));
     }
 
@@ -588,17 +620,11 @@ namespace Deployotron\Actions {
    * Restart Apache2.
    */
   class RestartApache2 extends Action {
+    static protected $description = 'Restart Apache2.';
     static protected $runMessage = 'Restarting Apache2';
     static protected $enableSwitch = 'restart-apache2';
     static protected $killSwitch = 'no-restart-apache2';
     static protected $short = 'restart apache2';
-
-    /**
-     * {@inheritdoc}
-     */
-    public function describe() {
-      return dt("Restart Apache2.");
-    }
 
     /**
      * {@inheritdoc}
@@ -615,17 +641,11 @@ namespace Deployotron\Actions {
    * Restart Varnish.
    */
   class RestartVarnish extends Action {
+    static protected $description = 'Restart Varnish.';
     static protected $runMessage = 'Restarting Varnish';
     static protected $enableSwitch = 'restart-varnish';
     static protected $killSwitch = 'no-restart-varnish';
     static protected $short = 'restart varnish';
-
-    /**
-     * {@inheritdoc}
-     */
-    public function describe() {
-      return dt("Restart Varnish");
-    }
 
     /**
      * {@inheritdoc}
@@ -641,19 +661,11 @@ namespace Deployotron\Actions {
   /**
    * Update database.
    */
-  function deployotron_deploy_action_update_database($site, $settings) {
-  }
   class UpdateDatabase extends Action {
+    static protected $description = 'Update database schema.';
     static protected $runMessage = 'Running database updates';
     static protected $killSwitch = 'no-updb';
     static protected $short = 'update database schema';
-
-    /**
-     * {@inheritdoc}
-     */
-    public function describe() {
-      return dt("Update database schema.");
-    }
 
     /**
      * {@inheritdoc}
@@ -670,16 +682,10 @@ namespace Deployotron\Actions {
    * Clear cache.
    */
   class ClearCache extends Action {
+    static protected $description = 'Clear all Drupal caches.';
     static protected $runMessage = 'Clearing caches';
     static protected $short = 'cache clear';
     static protected $killSwitch = 'no-cc-all';
-
-    /**
-     * {@inheritdoc}
-     */
-    public function describe() {
-      return "Clear all Drupal caches.";
-    }
 
     /**
      * {@inheritdoc}
@@ -693,9 +699,10 @@ namespace Deployotron\Actions {
   }
 
   /**
-   * Clear cache.
+   * Prepare OMG.
    */
   class OMGPrepare extends Action {
+    static protected $description = 'Preparing restore.';
     static protected $runMessage = 'Preparing';
     static protected $short = 'preparing';
 
@@ -747,15 +754,28 @@ namespace Deployotron\Actions {
     /**
      * {@inheritdoc}
      */
-    public function describe() {
-      return "Preparing restore.";
+    public function run() {
+      // Doing nothing.
+      return TRUE;
     }
+  }
+
+  /**
+   * Run Drake.
+   */
+  class RunDrakePostUpdate extends Action {
+    static protected $description = 'Run drake post-update.';
+    static protected $runMessage = 'Running drake post-update';
+    static protected $short = 'run drake post-update';
+    static protected $enableSwitch = 'drake-post-update';
 
     /**
      * {@inheritdoc}
      */
     public function run() {
-      // Doing nothing.
+      if (!$this->drush('drake', array('post-update'), array('no-task-ok' => TRUE))) {
+        return drush_set_error(dt('Error runninng drake.'));
+      }
       return TRUE;
     }
   }

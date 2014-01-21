@@ -1,17 +1,11 @@
 <?php
+
 /**
  * @file
  * Drush commands for Deployotron!
- *
- * In order to be able to restart apache2/varnish, use the following command to
- * edit a sudoers.d config file:
- *
- * sudo visudo -f /etc/sudoers.d/deployotron
- *
- * And add the following to the file:
- *
- * deploy_user          ALL=(root) NOPASSWD: /usr/sbin/service apache2 restart,/usr/sbin/service varnish restart
  */
+
+define('DEPLOYOTRON_VERSION', '1.1.9');
 
 require_once 'deployotron.actions.inc';
 
@@ -23,7 +17,7 @@ use Deployotron\ActionFactory;
 function deployotron_drush_command() {
   $items['deploy'] = array(
     'description' => 'Deploy site to environment.',
-    'callback' => 'drush_deployotron_run',
+    'command-hook' => 'deployotron_run',
     'callback arguments' => array('deploy'),
     'arguments' => array(
       'site-alias' => 'Site alias to deploy to.',
@@ -41,7 +35,7 @@ function deployotron_drush_command() {
 
   $items['oh-my-god'] = array(
     'description' => 'Try to restore a site from a backup.',
-    'callback' => 'drush_deployotron_run',
+    'command-hook' => 'deployotron_run',
     'callback arguments' => array('omg'),
     'arguments' => array(
       'site-alias' => 'Site alias to try and save.',
@@ -123,16 +117,24 @@ function drush_deployotron_run_validate($name, $site_alias = NULL) {
 /**
  * Command callback.
  */
-function drush_deployotron_run($name, $site) {
+function drush_deployotron_run($name, $site_alias) {
   global $_deployotron_actions, $_deployotron_rollbacks;
   $_deployotron_rollbacks = array();
+  $site = drush_sitealias_get_record($site_alias);
 
   $message = "About to:\n\n";
   $i = 1;
   foreach ($_deployotron_actions as $action) {
     if ($action->enabled()) {
-      $message .= ($i++) . ': ' . strtr($action->describe(), array("\n" => "\n   ")) . "\n\n";
+      $message .= ($i++) . ': ' . strtr($action->getDescription(), array("\n" => "\n   ")) . "\n\n";
     }
+  }
+
+  $confirm_message = trim(drush_get_option('message', NULL) . "\n\n" .
+                     drush_get_option('confirm_message', NULL) . "\n\n" .
+                     drush_get_option('confirm_message_' . $name, NULL));
+  if (!empty($confirm_message)) {
+    $message .= $confirm_message . "\n\n";
   }
 
   if (drush_get_option('no-confirm', FALSE)) {
@@ -162,6 +164,13 @@ function drush_deployotron_run($name, $site) {
         drush_print();
       }
     }
+  }
+
+  $done_message = trim(drush_get_option('message', NULL) . "\n\n" .
+                  drush_get_option('done_message', NULL) . "\n\n" .
+                  drush_get_option('done_message_' . $name, NULL));
+  if (!empty($done_message)) {
+    drush_print("\n\n" . $done_message);
   }
 
   drush_print("Done.");
