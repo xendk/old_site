@@ -5,7 +5,7 @@
  * Drush commands for Deployotron!
  */
 
-define('DEPLOYOTRON_VERSION', '1.1.9');
+define('DEPLOYOTRON_VERSION', '1.2.1');
 
 require_once 'deployotron.actions.inc';
 
@@ -25,11 +25,13 @@ function deployotron_drush_command() {
     'options' => array(
       'no-confirm' => 'Do not require confirmation before running.',
     ),
+    'sub-options' => array(),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_ROOT,
   );
   foreach (ActionFactory::getActions('deploy') as $action) {
     if ($options = $action->getOptions()) {
-      $items['deploy']['options'] += $options;
+      $items['deploy']['options'] += $options['options'];
+      $items['deploy']['sub-options'] += $options['sub-options'];
     }
   }
 
@@ -43,6 +45,7 @@ function deployotron_drush_command() {
     'options' => array(
       'no-confirm' => 'Do not require confirmation before running.',
     ),
+    'sub-options' => array(),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_ROOT,
     'aliases' => array(
       'omg',
@@ -50,9 +53,18 @@ function deployotron_drush_command() {
   );
   foreach (ActionFactory::getActions('omg') as $action) {
     if ($options = $action->getOptions()) {
-      $items['oh-my-god']['options'] += $options;
+      $items['oh-my-god']['options'] += $options['options'];
+      $items['oh-my-god']['sub-options'] += $options['sub-options'];
     }
   }
+
+  $items['deployotron-actions'] = array(
+    'description' => 'Display the actions run by deployotron.',
+    'hidden' => TRUE,
+    'topic' => TRUE,
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'callback' => 'deployotron_print_actions',
+  );
 
   return $items;
 }
@@ -71,7 +83,7 @@ function deployotron_drush_help($section) {
     case 'drush:deploy':
       return dt("Deploy site to a specific environment.");
 
-    case 'drush:omg':
+    case 'drush:oh-my-god':
       return dt("Try to find a backup, and restore it to the site.");
 
   }
@@ -148,11 +160,14 @@ function drush_deployotron_run($name, $site_alias) {
   }
 
   $success = FALSE;
+  // Using an ArrayObject instead of a plain array, as arrays are passed by copy
+  // and objects aren't. Relying on the callee to remember the & is error-prone.
+  $state = new ArrayObject();
   foreach ($_deployotron_actions as $action) {
     if ($action->enabled()) {
       $short = $action->getShort();
       drush_log($action->getRunMessage(), 'status');
-      $success = $action->run();
+      $success = $action->run($state);
       $_deployotron_rollbacks[] = $action;
       if (!$success) {
         drush_log(dt('@action failed.', array('@action' => $short)), 'error');
@@ -189,4 +204,11 @@ function drush_deployotron_run_rollback($name) {
       }
     }
   }
+}
+
+/**
+ * Callback for topic depoloyotron-actions.
+ */
+function deployotron_print_actions() {
+  ActionFactory::getHelp();
 }
