@@ -27,3 +27,12 @@ $aliases['live'] = array(
     'branch' => 'master',
   ),
 );
+
+$aliases['test'] = array(
+  'parent' => '@xen.common',
+  'uri' => 'test.xen.dk',
+  'root' => '/var/www/test.xen.dk',
+  'deployotron' => array(
+    'branch' => 'master',
+  ),
+);
