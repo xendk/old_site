@@ -1,0 +1,25 @@
+machine:
+  environment:
+    # Add our bin dir and composer global bin dir to path.
+    PATH: $HOME/.composer/vendor/bin:$PATH
+  php:
+    # Fix version so we'll be using phpenv instead of the system PHP,
+    # which allows us to fiddle with the conf files.
+    version: 5.4.21
+
+dependencies:
+  override:
+    - composer --prefer-source --no-interaction global require drush/drush:6.2.0
+    - echo "sendmail_path = /bin/true" > ~/.phpenv/versions/$(phpenv global)/etc/conf.d/sendmail.ini
+  cache_directories:
+    - "~/.composer"
+    - "~/aux"
+  post:
+    - ./vendor/bin/proctor setup:circle
+    - ./vendor/bin/proctor prepare --fetch --selenium-dir=~/aux
+    - ./vendor/bin/proctor prepare build default
+    - ./vendor/bin/proctor prepare use localhost
+
+test:
+  override:
+    - ./vendor/bin/proctor run

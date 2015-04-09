@@ -1,0 +1,2 @@
+fetch-strategy: drush
+fetch-alias: '@live'

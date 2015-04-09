@@ -1,0 +1,22 @@
+default:
+  # context:
+  #   parameters:
+  #     base_url: 'http://test.xen.dk'
+  suites:
+    default:
+      contexts:
+        - FeatureContext
+        - Behat\MinkExtension\Context\MinkContext
+  extensions:
+    Behat\MinkExtension:    
+      base_url: 'http://test.xen.dev' # proctor:host
+    # Behat\MinkExtension\Extension: 
+      # goutte: ~
+      selenium2:
+        browser: 'chrome'
+      # show_cmd: 'open %s'
+      # default_session: 'selenium2'
+      # javascript_session: 'selenium2'
+      # goutte: ~
+      # selenium2:
+      #   wd_host: "http://localhost:4444/wd/hub"
