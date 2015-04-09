@@ -18,8 +18,8 @@ dependencies:
   post:
     - ./vendor/bin/proctor setup:circle
     - ./vendor/bin/proctor prepare --fetch --selenium-dir=~/aux
-    - ./vendor/bin/proctor prepare build default
-    - ./vendor/bin/proctor prepare use localhost
+    - ./vendor/bin/proctor build default
+    - ./vendor/bin/proctor use localhost
 
 test:
   override:
