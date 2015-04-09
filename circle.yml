@@ -17,7 +17,7 @@ dependencies:
     - "~/aux"
   post:
     - ./vendor/bin/proctor setup:circle
-    - ./vendor/bin/proctor prepare --fetch --selenium-dir=~/aux
+    - ./vendor/bin/proctor prepare --fetch --selenium-dir ~/aux
     - ./vendor/bin/proctor build default
     - ./vendor/bin/proctor use localhost
 
