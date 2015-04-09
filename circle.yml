@@ -18,6 +18,7 @@ dependencies:
   post:
     - ./vendor/bin/proctor setup:circle
     - ./vendor/bin/proctor prepare --fetch --selenium-dir ~/aux
+    - ps xa | grep java
     - ssh root@xen.dk echo "test"
     - ./vendor/bin/proctor build default
     - ./vendor/bin/proctor use localhost
