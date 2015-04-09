@@ -19,7 +19,7 @@ dependencies:
     - ./vendor/bin/proctor setup:circle
     - ./vendor/bin/proctor prepare --fetch --selenium-dir ~/aux:
         background: true
-    - ps xa | grep java
+    # Temporary hack.
     - ssh root@xen.dk echo "test"
     - ./vendor/bin/proctor build default
     - ./vendor/bin/proctor use localhost:8080
