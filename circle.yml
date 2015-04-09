@@ -9,6 +9,7 @@ machine:
 
 dependencies:
   override:
+    - composer install --no-interaction
     - composer --prefer-source --no-interaction global require drush/drush:6.2.0
     - echo "sendmail_path = /bin/true" > ~/.phpenv/versions/$(phpenv global)/etc/conf.d/sendmail.ini
   cache_directories:
