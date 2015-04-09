@@ -22,7 +22,7 @@ dependencies:
     - ps xa | grep java
     - ssh root@xen.dk echo "test"
     - ./vendor/bin/proctor build default
-    - ./vendor/bin/proctor use localhost
+    - ./vendor/bin/proctor use localhost:8080
 
 test:
   override:
