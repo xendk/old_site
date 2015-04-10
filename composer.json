@@ -3,16 +3,22 @@
     {
       "type": "vcs",
       "url": "git@github.com:xendk/proctor.git"
+    },
+    {
+      "type": "vcs",
+      "url": "git@github.com:xendk/eyes.git"
     }
   ],
   "require": {
     "xendk/proctor": "dev-master",
+    "xendk/eyes": "dev-master",
     "behat/behat": "~3.0",
     "behat/mink": "~1.6",
     "behat/mink-extension": "~2.0",
     "behat/mink-selenium2-driver": "~1.2",
     "behat/mink-goutte-driver": "~1.1",
     "symfony/finder": "~2.6",
-    "phpunit/phpunit": "~4.5"
+    "phpunit/phpunit": "~4.5",
+    "codeception/codeception": "*"
   }
 }

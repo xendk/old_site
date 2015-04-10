@@ -1,0 +1,13 @@
+class_name: EyesTester
+modules:
+    enabled: 
+      - EyesHelper
+      - WebDriver
+      - Eyes
+    config:
+      WebDriver:
+        url: 'http://test.xen.dev' # proctor:host
+        browser: chrome
+      Eyes:
+        api_key: 'e9GAkZ30biPxyDYv1OflTyklqIh4LpFkLf101tydzMiYQ110'
+        app_name: 'Xen.dk'
