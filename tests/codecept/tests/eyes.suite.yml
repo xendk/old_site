@@ -3,11 +3,11 @@ modules:
     enabled: 
       - EyesHelper
       - WebDriver
-      - Eyes
+      - Argus
     config:
       WebDriver:
         url: 'http://test.xen.dev' # proctor:host
-        browser: chrome
-      Eyes:
-        api_key: 'e9GAkZ30biPxyDYv1OflTyklqIh4LpFkLf101tydzMiYQ110'
-        app_name: 'Xen.dk'
+        browser: firefox
+        window_size: 1280x1024
+        # browser: phantomjs
+        # window_size: 1280x1024

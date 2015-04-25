@@ -13,7 +13,7 @@ default:
     # Behat\MinkExtension\Extension: 
       # goutte: ~
       selenium2:
-        browser: 'chrome'
+        browser: 'firefox'
       # show_cmd: 'open %s'
       # default_session: 'selenium2'
       # javascript_session: 'selenium2'
