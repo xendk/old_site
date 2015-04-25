@@ -26,6 +26,7 @@ dependencies:
     # Temporary hack.
     - ssh root@xen.dk echo "test"
     - ./vendor/bin/proctor build default
+    - drush upwd xen --password=secret
     - ./vendor/bin/proctor use localhost:8080
 
 test:
