@@ -25,7 +25,7 @@ dependencies:
         background: true
     # Temporary hack.
     - ssh root@xen.dk echo "test"
-    - ./vendor/bin/proctor build default
+    - ./vendor/bin/proctor build --timeout 600 default
     - drush upwd xen --password=secret
     - ./vendor/bin/proctor use localhost:8080
 
