@@ -172,15 +172,27 @@ class DeployotronCase extends Drush_CommandTestCase {
     $this->drush('cc', array('drush'), array(), NULL, $this->webroot());
 
     // No alias error message.
-    $this->drush('deploy 2>&1', array(), array('y' => TRUE, 'branch' => '', 'sha' => '04256b5992d8b4a4fae25c7cb7888583749fabc0'), NULL, $this->webroot(), self::EXIT_ERROR);
+    $this->drush('deploy 2>&1', array(), array(
+        'y' => TRUE,
+        'branch' => '',
+        'sha' => '04256b5992d8b4a4fae25c7cb7888583749fabc0',
+      ), NULL, $this->webroot(), self::EXIT_ERROR);
     $this->assertRegExp('/No alias given/', $this->getOutput());
 
     // Bad alias error.
-    $this->drush('deploy 2>&1', array('@badalias'), array('y' => TRUE, 'branch' => '', 'sha' => '04256b5992d8b4a4fae25c7cb7888583749fabc0'), NULL, $this->webroot(), self::EXIT_ERROR);
+    $this->drush('deploy 2>&1', array('@badalias'), array(
+        'y' => TRUE,
+        'branch' => '',
+        'sha' => '04256b5992d8b4a4fae25c7cb7888583749fabc0',
+      ), NULL, $this->webroot(), self::EXIT_ERROR);
     $this->assertRegExp('/Invalid alias/', $this->getOutput());
 
     // Also check that aborting works.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('n' => TRUE, 'branch' => '', 'sha' => '04256b5992d8b4a4fae25c7cb7888583749fabc0'), NULL, $this->webroot());
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'n' => TRUE,
+        'branch' => '',
+        'sha' => '04256b5992d8b4a4fae25c7cb7888583749fabc0',
+      ), NULL, $this->webroot());
     $this->assertRegExp('/Aborting/', $this->getOutput());
     $this->assertNotRegExp('/Done/', $this->getOutput());
   }
@@ -203,15 +215,30 @@ class DeployotronCase extends Drush_CommandTestCase {
     $this->assertFileExists($this->deploySite() . '/VERSION.txt');
 
     // Check that a invalid tag/branch prints the proper error message.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'branch' => '', 'tag' => 'slipstream', 'sha' => ''), NULL, $this->webroot(), self::EXIT_ERROR);
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'branch' => '',
+        'tag' => 'slipstream',
+        'sha' => '',
+      ), NULL, $this->webroot(), self::EXIT_ERROR);
     $this->assertRegExp('/Error finding SHA for tag/', $this->getOutput());
 
     // Check that a invalid SHA prints the proper error message.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'branch' => '', 'tag' => '', 'sha' => 'deadc0de'), NULL, $this->webroot(), self::EXIT_ERROR);
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'branch' => '',
+        'tag' => '',
+        'sha' => 'deadc0de',
+      ), NULL, $this->webroot(), self::EXIT_ERROR);
     $this->assertRegExp('/Unknown SHA/', $this->getOutput());
 
     // Check that missing branch/tag/sha prints the proper error message.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'branch' => '', 'tag' => '', 'sha' => ''), NULL, $this->webroot(), self::EXIT_ERROR);
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'branch' => '',
+        'tag' => '',
+        'sha' => '',
+      ), NULL, $this->webroot(), self::EXIT_ERROR);
     $this->assertRegExp('/You must provide at least one of --branch, --tag or --sha/', $this->getOutput());
 
     // Check that a dirty checkout makes deployment fail..
@@ -227,7 +254,11 @@ class DeployotronCase extends Drush_CommandTestCase {
     // Fix the the checkout and check that we can now deploy, and throw in
     // no-confirm for coverage.
     exec('cd ' . $this->deploySite() . ' && git reset --hard');
-    $this->drush('deploy 2>&1', array('@deployotron'), array('no-confirm' => TRUE, 'branch' => '', 'sha' => 'b9471948c3f83a665dd4f106aba3de8962d69b42'), NULL, $this->webroot());
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'no-confirm' => TRUE,
+        'branch' => '',
+        'sha' => 'b9471948c3f83a665dd4f106aba3de8962d69b42',
+      ), NULL, $this->webroot());
     $this->assertRegExp('/HEAD now at b9471948c3f83a665dd4f106aba3de8962d69b42/', $this->getOutput());
 
     // VERSION.txt should still exist.
@@ -238,9 +269,6 @@ class DeployotronCase extends Drush_CommandTestCase {
     $this->assertRegExp('/SHA: b9471948c3f83a665dd4f106aba3de8962d69b42/', $version_txt);
     $this->assertRegExp('/Time of deployment: /', $version_txt);
     $this->assertRegExp('/Deployer: /', $version_txt);
-
-    // Check that the switch for echo didn't got written to the file.
-    $this->assertNotRegExp('/-e/', $version_txt);
 
     // Check that a file in the way of a new file will cause the deployment to
     // roll back.
@@ -328,7 +356,11 @@ class DeployotronCase extends Drush_CommandTestCase {
     $this->drush('cc', array('drush'), array(), NULL, $this->webroot());
 
     // Start with a simple deployment.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'branch' => '', 'sha' => '04256b5992d8b4a4fae25c7cb7888583749fabc0'), NULL, $this->webroot());
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'branch' => '',
+        'sha' => '04256b5992d8b4a4fae25c7cb7888583749fabc0',
+      ), NULL, $this->webroot());
     $this->assertRegExp('/HEAD now at 04256b5992d8b4a4fae25c7cb7888583749fabc0/', $this->getOutput());
 
     // Set a variable.
@@ -338,7 +370,11 @@ class DeployotronCase extends Drush_CommandTestCase {
     $this->assertRegExp("/magic_variable: .bumblebee./", $this->getOutput());
 
     // Deploy another version.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'branch' => '', 'sha' => 'b9471948c3f83a665dd4f106aba3de8962d69b42'), NULL, $this->webroot());
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'branch' => '',
+        'sha' => 'b9471948c3f83a665dd4f106aba3de8962d69b42',
+      ), NULL, $this->webroot());
     $this->assertRegExp('/HEAD now at b9471948c3f83a665dd4f106aba3de8962d69b42/', $this->getOutput());
 
     // And a third time.
@@ -392,33 +428,126 @@ class DeployotronCase extends Drush_CommandTestCase {
   }
 
   /**
-   * Test that overriding Apache2 and Varnish commands work.
-   *
-   * Tests the actions as a side-effect.
+   * Test that post commands work.
    */
-  public function testCommandOverride() {
+  public function testPrePostCommand() {
     $this->writeAlias(array(
-        'branch' => 'master',
-        'restart-apache2' => TRUE,
-        'restart-apache2-command' => '/bin/true',
-        'restart-varnish' => TRUE,
-        'restart-varnish-command' => '/bin/true',
-      ));
+      'branch' => 'master',
+      'post-deploy' => array(
+        // The funky quoting makes it possible to distinguish between the
+        // command being output and the output of the command.
+        'echo "post""-deploy"',
+      ),
+    ));
 
     // Drush 5 needs to be kicked to see the new command.
     $this->drush('cc', array('drush'), array(), NULL, $this->webroot());
 
-    // Check that deployment works.
+    // See if post command works.
     $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE), NULL, $this->webroot());
     $this->assertRegExp('/HEAD now at fbcaa29d45716edcbedc3c325bfbab828f1ce838/', $this->getOutput());
 
-    // Check that failing Apache2 restart command gets caught.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'restart-apache2-command' => '/bin/false'), NULL, $this->webroot(), self::EXIT_ERROR);
-    $this->assertRegExp('/Error restarting apache2/', $this->getOutput());
+    // Confirm message.
+    $this->assertRegExp('/Run command: echo "post""-deploy"/', $this->getOutput());
+    // Running message.
+    $this->assertRegExp('/Running command: echo "post""-deploy"/', $this->getOutput());
+    // Output of the command.
+    $this->assertRegExp('/post-deploy/', $this->getOutput());
 
-    // Check that failing Varnish restart command gets caught.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'restart-varnish-command' => '/bin/false'), NULL, $this->webroot(), self::EXIT_ERROR);
-    $this->assertRegExp('/Error restarting varnish/', $this->getOutput());
+    // Check that a failing command gets caught, and pre commands..
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'post-deploy' => '/bin/false',
+        'pre-deploy' => 'echo "pre""-deploy"',
+      ), NULL, $this->webroot(), self::EXIT_ERROR);
+
+    // Confirm message.
+    $this->assertRegExp('/Run command: \/bin\/false/', $this->getOutput());
+    $this->assertRegExp('/Run command: echo "pre""-deploy"/', $this->getOutput());
+    // Running message.
+    $this->assertRegExp('/Running command: echo "pre""-deploy"/', $this->getOutput());
+    // Output of the command.
+    $this->assertRegExp('/pre-deploy/', $this->getOutput());
+
+    // Failure message.
+    $this->assertRegExp('/Error running command "\/bin\/false"/', $this->getOutput());
+
+    // Multiple commands.
+    $this->writeAlias(array(
+      'branch' => 'master',
+      'post-deploy' => array(
+        'echo "post1""-deploy"',
+        'echo "post2""-deploy"',
+      ),
+    ));
+
+    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE), NULL, $this->webroot());
+    $this->assertRegExp('/HEAD now at fbcaa29d45716edcbedc3c325bfbab828f1ce838/', $this->getOutput());
+
+    // Confirm message.
+    $this->assertRegExp('/Run command: echo "post1""-deploy"/', $this->getOutput());
+    $this->assertRegExp('/Run command: echo "post2""-deploy"/', $this->getOutput());
+    // Running message.
+    $this->assertRegExp('/Running command: echo "post1""-deploy"/', $this->getOutput());
+    $this->assertRegExp('/Running command: echo "post2""-deploy"/', $this->getOutput());
+
+    // Output of the command.
+    $this->assertRegExp('/post2-deploy/', $this->getOutput());
+
+    // Drush commands.
+    $this->writeAlias(array(
+      'branch' => 'master',
+      'post-deploy' => array(
+        'drush php-eval "drush_print(\'post-\' . \'deploy\');"',
+      ),
+    ));
+
+    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE), NULL, $this->webroot());
+    $this->assertRegExp('/HEAD now at fbcaa29d45716edcbedc3c325bfbab828f1ce838/', $this->getOutput());
+
+    // Confirm message.
+    $this->assertRegExp('/Run command: drush php-eval "drush_print\(\'post-\' \. \'deploy\'\);"/', $this->getOutput());
+
+    // Running message.
+    $this->assertRegExp('/Running command: drush php-eval "drush_print\(\'post-\' \. \'deploy\'\);"/', $this->getOutput());
+
+    // Output of the command.
+    $this->assertRegExp('/post-deploy/', $this->getOutput());
+
+    // Don't run pre/post for killSwitched commands..
+    $this->writeAlias(array(
+      'branch' => 'master',
+      'post-updb' => array(
+        'drush php-eval "drush_print(\'post-\' . \'updb\');"',
+      ),
+    ));
+
+    // First double check that it's run per default.
+    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE), NULL, $this->webroot());
+    $this->assertRegExp('/HEAD now at fbcaa29d45716edcbedc3c325bfbab828f1ce838/', $this->getOutput());
+
+    // Confirm message.
+    $this->assertRegExp('/Run command: drush php-eval "drush_print\(\'post-\' \. \'updb\'\);"/', $this->getOutput());
+
+    // Running message.
+    $this->assertRegExp('/Running command: drush php-eval "drush_print\(\'post-\' \. \'updb\'\);"/', $this->getOutput());
+
+    // Output of the command.
+    $this->assertRegExp('/post-updb/', $this->getOutput());
+
+    // Now check that it's not run when the action is not run.
+    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'no-updb' => TRUE), NULL, $this->webroot());
+    $this->assertRegExp('/HEAD now at fbcaa29d45716edcbedc3c325bfbab828f1ce838/', $this->getOutput());
+
+    // Confirm message.
+    $this->assertNotRegExp('/Run command: drush php-eval "drush_print\(\'post-\' \. \'updb\'\);"/', $this->getOutput());
+
+    // Running message.
+    $this->assertNotRegExp('/Running command: drush php-eval "drush_print\(\'post-\' \. \'updb\'\);"/', $this->getOutput());
+
+    // Output of the command.
+    $this->assertNotRegExp('/post-updb/', $this->getOutput());
+
   }
 
   /**
@@ -437,7 +566,11 @@ class DeployotronCase extends Drush_CommandTestCase {
     $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE), NULL, $this->webroot());
     $this->assertRegExp('/HEAD now at fbcaa29d45716edcbedc3c325bfbab828f1ce838/', $this->getOutput());
 
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'no-deploy' => TRUE, 'flowdock-token' => $this->flowdockToken), NULL, $this->webroot());
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'no-deploy' => TRUE,
+        'flowdock-token' => $this->flowdockToken,
+      ), NULL, $this->webroot());
     // Check VERSION.txt message.
     $this->assertRegExp('/No version deployed, not creating\/updating VERSION.txt/', $this->getOutput());
 
@@ -466,7 +599,12 @@ class DeployotronCase extends Drush_CommandTestCase {
     // any.
     foreach (range(1, 2) as $num) {
       foreach ($shas as $sha) {
-        $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'branch' => '', 'sha' => $sha, 'num-dumps' => 0), NULL, $this->webroot());
+        $this->drush('deploy 2>&1', array('@deployotron'), array(
+            'y' => TRUE,
+            'branch' => '',
+            'sha' => $sha,
+            'num-dumps' => 0,
+          ), NULL, $this->webroot());
         $this->assertRegExp('/HEAD now at ' . $sha . '/', $this->getOutput());
         $this->assertRegExp('/Not purging any dumps/', $this->getOutput());
         $expected_num_dumps++;
@@ -481,7 +619,11 @@ class DeployotronCase extends Drush_CommandTestCase {
     $expected_dumps = array_slice($dumps, 0, 4);
 
     // Don't specify num-dumps, which should default to 5.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'branch' => '', 'sha' => $sha), NULL, $this->webroot());
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'branch' => '',
+        'sha' => $sha,
+      ), NULL, $this->webroot());
     $this->assertRegExp('/HEAD now at ' . $sha . '/', $this->getOutput());
     $this->assertRegExp('/Purge the following dump files/', $this->getOutput());
     $this->assertCount(5, $this->fileList($this->dumpPath()));
@@ -495,7 +637,12 @@ class DeployotronCase extends Drush_CommandTestCase {
     $expected_dumps = array_slice($dumps, 0, 2);
 
     // And again with a specified num-dumps.
-    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE, 'branch' => '', 'sha' => $sha, 'num-dumps' => 3), NULL, $this->webroot());
+    $this->drush('deploy 2>&1', array('@deployotron'), array(
+        'y' => TRUE,
+        'branch' => '',
+        'sha' => $sha,
+        'num-dumps' => 3,
+      ), NULL, $this->webroot());
     $this->assertRegExp('/HEAD now at ' . $sha . '/', $this->getOutput());
     $this->assertRegExp('/Purge the following dump files/', $this->getOutput());
     $this->assertCount(3, $this->fileList($this->dumpPath()));
@@ -504,5 +651,26 @@ class DeployotronCase extends Drush_CommandTestCase {
     // Prepend the newly created dump onto the expected.
     array_unshift($expected_dumps, $dumps[0]);
     $this->assertEquals($expected_dumps, $dumps);
+  }
+
+  /**
+   * Check that annotated tags work.
+   */
+  public function testAnnotatedTags() {
+    // Drush 5 needs to be kicked to see the new command.
+    $this->drush('cc', array('drush'), array(), NULL, $this->webroot());
+
+    $this->writeAlias(array(
+        'tag' => 'annotated-tag',
+      ));
+
+    // Check that deployment of annotated tags works.
+    $this->drush('deploy 2>&1', array('@deployotron'), array('y' => TRUE), NULL, $this->webroot());
+    $this->assertRegExp('/HEAD now at fbcaa29d45716edcbedc3c325bfbab828f1ce838/', $this->getOutput());
+
+    // Check that VERSION.txt was created.
+    $this->assertFileExists($this->deploySite() . '/VERSION.txt');
+    $version_txt = file_get_contents($this->deploySite() . '/VERSION.txt');
+    $this->assertRegExp('/Tags: annotated-tag/', $version_txt);
   }
 }

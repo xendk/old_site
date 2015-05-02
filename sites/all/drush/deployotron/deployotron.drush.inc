@@ -5,7 +5,7 @@
  * Drush commands for Deployotron!
  */
 
-define('DEPLOYOTRON_VERSION', '1.2.1');
+define('DEPLOYOTRON_VERSION', '2.0.1');
 
 require_once 'deployotron.actions.inc';
 
@@ -31,7 +31,12 @@ function deployotron_drush_command() {
   foreach (ActionFactory::getActions('deploy') as $action) {
     if ($options = $action->getOptions()) {
       $items['deploy']['options'] += $options['options'];
-      $items['deploy']['sub-options'] += $options['sub-options'];
+      foreach ($options['sub-options'] as $sub => $sub_options) {
+        if (!isset($items['deploy']['sub-options'][$sub])) {
+          $items['deploy']['sub-options'][$sub] = array();
+        }
+        $items['deploy']['sub-options'][$sub] += $sub_options;
+      }
     }
   }
 
@@ -54,7 +59,12 @@ function deployotron_drush_command() {
   foreach (ActionFactory::getActions('omg') as $action) {
     if ($options = $action->getOptions()) {
       $items['oh-my-god']['options'] += $options['options'];
-      $items['oh-my-god']['sub-options'] += $options['sub-options'];
+      foreach ($options['sub-options'] as $sub => $sub_options) {
+        if (!isset($items['oh-my-god']['sub-options'][$sub])) {
+          $items['oh-my-god']['sub-options'][$sub] = array();
+        }
+        $items['oh-my-god']['sub-options'][$sub] += $sub_options;
+      }
     }
   }
 
@@ -132,7 +142,6 @@ function drush_deployotron_run_validate($name, $site_alias = NULL) {
 function drush_deployotron_run($name, $site_alias) {
   global $_deployotron_actions, $_deployotron_rollbacks;
   $_deployotron_rollbacks = array();
-  $site = drush_sitealias_get_record($site_alias);
 
   $message = "About to:\n\n";
   $i = 1;
